@@ -53,7 +53,7 @@ export class AadeClient {
    */
   async sendClient(data: SendClientRequest): Promise<AadeSubmitResponse> {
     const xmlBody = buildSendClientXml(data);
-    console.log('Sending SendClient XML:', xmlBody); // Debug log
+
     return this.postXml('/SendClient', xmlBody);
   }
 

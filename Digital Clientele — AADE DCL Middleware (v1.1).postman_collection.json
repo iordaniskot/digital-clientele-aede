@@ -1,0 +1,1278 @@
+{
+  "info": {
+    "_postman_id": "c01af475-eae4-487d-96b1-3824ce0e1d2b",
+    "name": "Digital Clientele — AADE DCL Middleware (v1.1)",
+    "description": "Postman collection for the Digital Clientele REST API middleware.\nCovers the full AADE Ψηφιακό Πελατολόγιο rental workflow (Ενοικίαση Οχημάτων).\n\nBased on DCL API Documentation v1.1 — June 2025.\n\n**Workflow:**\n1. SendClient — create entry with branch, vehicle & service info\n2. UpdateClient — add amount (2nd call)\n3. UpdateClient — complete entry with return location, invoice details (3rd call)\n4. ClientCorrelations — correlate with MARK or FIM receipt\n\n**Setup:**\n- Set `baseUrl` variable (default: http://localhost:3000)\n- `dclId` is auto-saved from SendClient response",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "24926449"
+  },
+  "item": [
+    {
+      "name": "Health & Info",
+      "item": [
+        {
+          "name": "Root — API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
+            "description": "Returns API info and available endpoints."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Simple health check."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SendClient (Step 1 — Create Entry)",
+      "item": [
+        {
+          "name": "1a. Basic Rental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "        console.log('Saved dclId: ' + jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Create a basic rental entry.\n\n- branch: installation number (0 = HQ)\n- vehicleMovementPurpose: 1=Rental, 2=OwnUse, 3=FreeService\n\nThe response `newClientDclID` is auto-saved to the `dclId` variable."
+          },
+          "response": []
+        },
+        {
+          "name": "1b. Rental with Different Pickup Location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"comments\": \"Pickup from airport\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1,\n    \"isDiffVehPickupLocation\": true,\n    \"vehiclePickupLocation\": \"Athens International Airport\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Rental with a different vehicle pickup location."
+          },
+          "response": []
+        },
+        {
+          "name": "1c. Rental with Foreign Vehicle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"rental\": {\n    \"foreignVehicleRegistrationNumber\": \"DE-AB1234\",\n    \"vehicleCategory\": \"SUV\",\n    \"vehicleFactory\": \"BMW\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Rental with a foreign vehicle registration.\n\nWhen foreignVehicleRegistrationNumber is provided, vehicleCategory and vehicleFactory become required."
+          },
+          "response": []
+        },
+        {
+          "name": "1d. Rental — OwnUse (Ιδιόχρηση)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΔΕΖ5678\",\n    \"vehicleMovementPurpose\": 2\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Self-use / own-use rental entry.\nvehicleMovementPurpose = 2 (Ιδιόχρηση)"
+          },
+          "response": []
+        },
+        {
+          "name": "1e. Rental — Free Service (Δωρεάν)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΗΘΚ9012\",\n    \"vehicleMovementPurpose\": 3\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Free service rental entry.\nvehicleMovementPurpose = 3 (Δωρεάν Υπηρεσία)"
+          },
+          "response": []
+        },
+        {
+          "name": "1f. Recurring Service (Επαναλαμβανόμενη)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"recurringService\": true,\n  \"customerVatNumber\": \"123456789\",\n  \"customerCountry\": \"GR\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Recurring B2B rental service.\n\nRequires: customerVatNumber, customerCountry.\nRestriction: vehicleMovementPurpose cannot be 2 (OwnUse) or 3 (FreeService)."
+          },
+          "response": []
+        },
+        {
+          "name": "1g. Continuous Service (Διαρκής/Λήψη Δικαιώματος)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"continuousService\": true,\n  \"fromAgreedPeriodDate\": \"2026-03-01\",\n  \"toAgreedPeriodDate\": \"2026-06-30\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Right-of-use / continuous service.\n\nRequires: fromAgreedPeriodDate, toAgreedPeriodDate."
+          },
+          "response": []
+        },
+        {
+          "name": "1h. Continuous Lease (Διαρκής Μίσθωση) — with periodicity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"continuousLeaseService\": true,\n  \"fromAgreedPeriodDate\": \"2026-01-01\",\n  \"toAgreedPeriodDate\": \"2026-12-31\",\n  \"periodicity\": 3,\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Ongoing lease with periodic partial invoicing.\n\nRequires: fromAgreedPeriodDate, toAgreedPeriodDate, and either periodicity (1-12 months) or periodicityOther (free text)."
+          },
+          "response": []
+        },
+        {
+          "name": "1i. Continuous Lease — with periodicityOther",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"continuousLeaseService\": true,\n  \"fromAgreedPeriodDate\": \"2026-01-01\",\n  \"toAgreedPeriodDate\": \"2027-01-01\",\n  \"periodicityOther\": \"Κάθε 45 ημέρες\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Continuous lease with free-text periodicity (when standard 1-12 months doesn't apply)."
+          },
+          "response": []
+        },
+        {
+          "name": "1j. Transmission Failure (Απώλεια Διασύνδεσης)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"transmissionFailure\": 1,\n  \"creationDateTime\": \"2026-02-20T10:30:00Z\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Late submission due to connection loss.\n\ntransmissionFailure=1 requires creationDateTime in UTC format (yyyy-MM-ddTHH:mm:ssZ)."
+          },
+          "response": []
+        },
+        {
+          "name": "1k. With entityVatNumber (Third-party call)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].newClientDclID) {",
+                  "        pm.collectionVariables.set('dclId', jsonData.response[0].newClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"entityVatNumber\": \"999999999\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "When called by a third party (e.g. accountant), entityVatNumber specifies the obligated entity's VAT number."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "UpdateClient (Steps 2 & 3)",
+      "item": [
+        {
+          "name": "2a. Add Agreed Amount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.response && jsonData.response[0] && jsonData.response[0].updatedClientDclID) {",
+                  "        pm.collectionVariables.set('updateDclId', jsonData.response[0].updatedClientDclID);",
+                  "        console.log('Saved updateDclId: ' + jsonData.response[0].updatedClientDclID);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150.00,\n  \"initialDclId\": \"{{dclId}}\",\n  \"invoiceKind\": 1\n  }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 2: Add the agreed amount to the rental entry.\n\nThe dclId URL parameter identifies the initial entry. The `initialDclId` is taken from the URL automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "2b. Add Amount + Comments",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 250.50,\n  \"comments\": \"Extended rental period\",\n   \"initialDclId\": \"{{dclId}}\",\n  \"invoiceKind\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 2: Add amount with comments."
+          },
+          "response": []
+        },
+        {
+          "name": "3a. Complete Entry — B2C with Invoice (ΑΛΠ/ΑΠΥ)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"invoiceKind\": 1,\n    \"initialDclId\": \"{{dclId}}\",\n  \"isDiffVehReturnLocation\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 3: Complete the entry with B2C retail invoice (ΑΛΠ/ΑΠΥ).\n\ninvoiceKind: 1=ΑΛΠ/ΑΠΥ, 2=ΤΙΜΟΛΟΓΙΟ, 3=ΑΛΠ/ΑΠΥ-ΦΗΜ"
+          },
+          "response": []
+        },
+        {
+          "name": "3b. Complete Entry — B2B with Invoice (ΤΙΜΟΛΟΓΙΟ)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": " {\"entryCompletion\": true,\n   \"initialDclId\": \"{{dclId}}\",\n  \"invoiceKind\": 2,\n  \"invoiceCounterparty\": \"123456789\",\n  \"invoiceCounterpartyCountry\": \"GR\",\n  \"isDiffVehReturnLocation\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 3: Complete B2B entry. invoiceCounterparty and invoiceCounterpartyCountry are required for B2B."
+          },
+          "response": []
+        },
+        {
+          "name": "3c. Complete Entry — Different Return Location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"invoiceKind\": 1,\n  \"isDiffVehReturnLocation\": true,\n  \"vehicleReturnLocation\": \"Thessaloniki Airport\",\n  \"initialDclId\": 100000000725751\n\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 3: Complete entry with a different return location."
+          },
+          "response": []
+        },
+        {
+          "name": "3d. Complete Entry — Non-Issue Invoice (Free Service)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"nonIssueInvoice\": true,\n  \"reasonNonIssueType\": 1,\n  \"isDiffVehReturnLocation\": false,\n    \"initialDclId\": \"{{dclId}}\"\n\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 3: Complete without invoice (free service).\n\nreasonNonIssueType: 1=Free Service, 2=OwnUse, 3=WarrantyCompensation (Garage only).\n\nNote: When nonIssueInvoice=true, invoiceCounterparty and invoiceCounterpartyCountry must NOT be sent."
+          },
+          "response": []
+        },
+        {
+          "name": "3e. Complete Entry — Non-Issue Invoice (OwnUse)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"nonIssueInvoice\": true,\n  \"reasonNonIssueType\": 2,\n  \"isDiffVehReturnLocation\": false,\n    \"initialDclId\": \"{{dclId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 3: Complete without invoice (own use / Ιδιόχρηση)."
+          },
+          "response": []
+        },
+        {
+          "name": "3f. Complete Entry — with entityVatNumber (Third-party)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"invoiceKind\": 1,\n  \"isDiffVehReturnLocation\": false,\n  \"entityVatNumber\": \"999999999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Step 3: Complete entry when called by third party (accountant/representative)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CancelClient",
+      "item": [
+        {
+          "name": "Cancel Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Cancel a client entry by DCL ID.\n\nThe cancellation receives its own DCL ID (cancellationID) in the response."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Entry — with entityVatNumber",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}?entityVatNumber=999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ],
+              "query": [
+                {
+                  "key": "entityVatNumber",
+                  "value": "999999999"
+                }
+              ]
+            },
+            "description": "Cancel when called by a third party."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RequestClients (Query/Fetch)",
+      "item": [
+        {
+          "name": "Get by dclId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?dclId={{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "dclId",
+                  "value": "{{dclId}}"
+                }
+              ]
+            },
+            "description": "Fetch entries with dclId greater than the specified value."
+          },
+          "response": []
+        },
+        {
+          "name": "Get with Range (dclId to maxDclId)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?dclId=1&maxDclId=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "dclId",
+                  "value": "1"
+                },
+                {
+                  "key": "maxDclId",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Fetch entries in a DCL ID range."
+          },
+          "response": []
+        },
+        {
+          "name": "Get with entityVatNumber",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?dclId=1&entityVatNumber=999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "dclId",
+                  "value": "1"
+                },
+                {
+                  "key": "entityVatNumber",
+                  "value": "999999999"
+                }
+              ]
+            },
+            "description": "Fetch entries for a specific entity VAT number (third-party call)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get with Pagination (continuationToken)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?dclId=1&continuationToken=abc123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "dclId",
+                  "value": "1"
+                },
+                {
+                  "key": "continuationToken",
+                  "value": "abc123"
+                }
+              ]
+            },
+            "description": "Paginated fetch using continuationToken from a previous response."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ClientCorrelations (Step 4)",
+      "item": [
+        {
+          "name": "4a. Correlate with MARK",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mark\": 400001234567890,\n  \"correlatedDCLIds\": [{{dclId}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/correlations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "correlations"
+              ]
+            },
+            "description": "Step 4: Correlate one or more completed DCL entries with a MARK number.\n\nEither mark OR fim must be provided (not both).\ncorrelatedDCLIds: max 50 entries."
+          },
+          "response": []
+        },
+        {
+          "name": "4b. Correlate with MARK — Multiple entries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mark\": 400001234567890,\n  \"correlatedDCLIds\": [1001, 1002, 1003]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/correlations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "correlations"
+              ]
+            },
+            "description": "Correlate multiple DCL entries with a single MARK."
+          },
+          "response": []
+        },
+        {
+          "name": "4c. Correlate with FIM (Fiscal Receipt)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fim\": {\n    \"FIMNumber\": \"ABC123456\",\n    \"FIMAA\": 42,\n    \"FIMIssueDate\": \"2026-02-22\",\n    \"FIMIssueTime\": \"14:30:00\"\n  },\n  \"correlatedDCLIds\": [{{dclId}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/correlations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "correlations"
+              ]
+            },
+            "description": "Step 4: Correlate with a ΦΗΜ fiscal receipt instead of MARK.\n\nFIM requires: FIMNumber, FIMAA, FIMIssueDate, FIMIssueTime."
+          },
+          "response": []
+        },
+        {
+          "name": "4d. Correlate with entityVatNumber (Third-party)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entityVatNumber\": \"999999999\",\n  \"mark\": 400001234567890,\n  \"correlatedDCLIds\": [{{dclId}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/correlations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "correlations"
+              ]
+            },
+            "description": "Correlate when called by third party."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation Error Examples",
+      "item": [
+        {
+          "name": "Missing branch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Should return 400 — branch is required."
+          },
+          "response": []
+        },
+        {
+          "name": "Missing rental object",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Should return 400 — rental object is required."
+          },
+          "response": []
+        },
+        {
+          "name": "Recurring + OwnUse (conflict)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"recurringService\": true,\n  \"customerVatNumber\": \"123456789\",\n  \"customerCountry\": \"GR\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 2\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Should return 400 — recurringService cannot have vehicleMovementPurpose=2 (OwnUse) or 3 (FreeService)."
+          },
+          "response": []
+        },
+        {
+          "name": "Continuous lease missing periodicity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"continuousLeaseService\": true,\n  \"fromAgreedPeriodDate\": \"2026-01-01\",\n  \"toAgreedPeriodDate\": \"2026-12-31\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Should return 400 — continuousLeaseService requires periodicity or periodicityOther."
+          },
+          "response": []
+        },
+        {
+          "name": "NonIssueInvoice + counterparty (conflict)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"nonIssueInvoice\": true,\n  \"reasonNonIssueType\": 1,\n  \"invoiceCounterparty\": \"123456789\",\n  \"invoiceCounterpartyCountry\": \"GR\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{dclId}}"
+              ]
+            },
+            "description": "Should return 400 — when nonIssueInvoice=true, invoiceCounterparty and invoiceCounterpartyCountry must NOT be sent."
+          },
+          "response": []
+        },
+        {
+          "name": "Multiple service types (conflict)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"recurringService\": true,\n  \"continuousService\": true,\n  \"customerVatNumber\": \"123456789\",\n  \"customerCountry\": \"GR\",\n  \"fromAgreedPeriodDate\": \"2026-01-01\",\n  \"toAgreedPeriodDate\": \"2026-12-31\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Should return 400 — only one service type allowed (recurringService, continuousService, or continuousLeaseService)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "dclId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "updateDclId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
