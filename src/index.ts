@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from 'express';
+import cors from 'cors';
 import { config } from './config';
 import healthRouter from './routes/health';
 import clientsRouter from './routes/clients';
@@ -7,6 +8,7 @@ import { errorHandler } from './middleware/errorHandler';
 const app: Application = express();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
