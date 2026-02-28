@@ -112,6 +112,46 @@ export class WrappClient {
   // ─── Billing Books ──────────────────────────────────────────────────────────
 
   /**
+   * Resolve the billing book UUID for a given invoice_type_code.
+   * Wrapp uses umbrella codes (1.1 covers 1.x, 2.1 covers 2.x, etc.),
+   * so we match the exact code first, then fall back to the umbrella.
+   */
+  async resolveBillingBookId(invoiceTypeCode: string): Promise<string> {
+    const books = await this.getBillingBooks();
+
+    // 1. Exact match
+    const exact = books.find(b => b.invoice_type_code === invoiceTypeCode);
+    if (exact) return exact.id;
+
+    // 2. Umbrella match — e.g. "1.3" falls back to "1.1", "2.4" to "2.1"
+    const major = invoiceTypeCode.split('.')[0];
+    const umbrella = books.find(b => b.invoice_type_code === `${major}.1`);
+    if (umbrella) return umbrella.id;
+
+    throw new WrappApiError(
+      `No billing book found for invoice_type_code "${invoiceTypeCode}"`,
+      404,
+    );
+  }
+
+  /**
+   * Create an invoice by invoice_type_code.
+   * Automatically resolves the billing_book_id from the tenant's billing books.
+   * If billing_book_id is already provided, it is used as-is.
+   */
+  async createInvoiceByTypeCode(
+    data: Omit<CreateInvoiceRequest, 'billing_book_id'> & { billing_book_id?: string },
+  ): Promise<WrappInvoiceResponse> {
+    const billingBookId = data.billing_book_id
+      ?? await this.resolveBillingBookId(data.invoice_type_code);
+
+    return this.createInvoice({
+      ...data,
+      billing_book_id: billingBookId,
+    } as CreateInvoiceRequest);
+  }
+
+  /**
    * GET /billing_books — Retrieve all billing books for the tenant.
    */
   async getBillingBooks(): Promise<BillingBook[]> {

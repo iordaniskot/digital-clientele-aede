@@ -35,8 +35,9 @@ export function validateCreateInvoice(req: Request, _res: Response, next: NextFu
   const errors: string[] = [];
 
   // ─── Top-level required fields ──────────────────────────────────────────────
-  if (!body.billing_book_id) {
-    errors.push('billing_book_id is required');
+  // billing_book_id is optional — if omitted, it will be resolved from invoice_type_code
+  if (!body.billing_book_id && !body.invoice_type_code) {
+    errors.push('billing_book_id or invoice_type_code is required');
   }
 
   if (!body.invoice_type_code) {

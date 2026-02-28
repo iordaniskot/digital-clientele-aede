@@ -21,7 +21,11 @@ const router = Router();
 router.post('/', validateCreateInvoice, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: CreateInvoiceRequest = req.body;
-    const result = await wrappClient.createInvoice(data);
+
+    // If billing_book_id is not provided, resolve it from invoice_type_code
+    const result = data.billing_book_id
+      ? await wrappClient.createInvoice(data)
+      : await wrappClient.createInvoiceByTypeCode(data);
 
     // Check if the result is a pending response
     if ('status' in result && result.status === 'pending') {
