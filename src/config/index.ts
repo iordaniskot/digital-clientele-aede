@@ -9,4 +9,10 @@ export const config = {
     userId: process.env.AADE_USER_ID || '',
     subscriptionKey: process.env.AADE_SUBSCRIPTION_KEY || '',
   },
+  wrapp: {
+    baseUrl: process.env.WRAPP_BASE_URL || 'https://wrapp.ai/api/v1',
+    apiKey: process.env.WRAPP_API_KEY || '',
+    email: process.env.WRAPP_EMAIL || '',
+    wrappUserId: process.env.WRAPP_USER_ID || '',
+  },
 } as const;

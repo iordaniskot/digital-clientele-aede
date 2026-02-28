@@ -1,0 +1,882 @@
+{
+  "info": {
+    "name": "Digital Clientele API",
+    "description": "Complete Postman collection for the Digital Clientele API.\n\nIncludes:\n- Health check\n- AADE DCL client management (create, update, cancel, fetch, correlate)\n- Wrapp billing books\n- Wrapp invoice creation (focused on ΑΠΥ 11.2)\n\n**Setup:**\n1. Set `baseUrl` (default http://localhost:6000)\n2. Run \"Get All Billing Books\" to auto-populate `billingBookId`\n3. `invoiceId`, `myDataMark`, `dclId` are auto-saved from responses",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:6000" },
+    { "key": "billingBookId", "value": "" },
+    { "key": "invoiceId", "value": "" },
+    { "key": "myDataMark", "value": "" },
+    { "key": "dclId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is ok', () => {",
+                  "  pm.expect(pm.response.json().status).to.eql('ok');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DCL — Clients",
+      "description": "AADE Digital Clientele (DCL) endpoints for car rental client management.",
+      "item": [
+        {
+          "name": "Create Client (SendClient)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.response && json.response[0] && json.response[0].newClientDclID) {",
+                  "  pm.collectionVariables.set('dclId', json.response[0].newClientDclID);",
+                  "  console.log('Saved dclId:', json.response[0].newClientDclID);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"]
+            },
+            "description": "Create a new rental client entry in AADE DCL.\n\n- branch: installation branch number\n- rental.vehicleRegistrationNumber: vehicle plate\n- rental.vehicleMovementPurpose: 1 (Rental), 2 (OwnUse), 3 (FreeService)"
+          }
+        },
+        {
+          "name": "Create Client — Foreign Vehicle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.response && json.response[0] && json.response[0].newClientDclID) {",
+                  "  pm.collectionVariables.set('dclId', json.response[0].newClientDclID);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"rental\": {\n    \"foreignVehicleRegistrationNumber\": \"AB123CD\",\n    \"vehicleCategory\": \"SUV\",\n    \"vehicleFactory\": \"Toyota\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"]
+            },
+            "description": "Create a rental client entry for a foreign-registered vehicle.\n\nWhen using foreignVehicleRegistrationNumber, vehicleCategory and vehicleFactory are required."
+          }
+        },
+        {
+          "name": "Create Client — Recurring B2B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.response && json.response[0] && json.response[0].newClientDclID) {",
+                  "  pm.collectionVariables.set('dclId', json.response[0].newClientDclID);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"recurringService\": true,\n  \"customerVatNumber\": \"123456789\",\n  \"customerCountry\": \"GR\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ1234\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"]
+            },
+            "description": "Create a recurring B2B rental client entry.\n\nrecurringService requires customerVatNumber and customerCountry."
+          }
+        },
+        {
+          "name": "Create Client — Continuous Lease",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.response && json.response[0] && json.response[0].newClientDclID) {",
+                  "  pm.collectionVariables.set('dclId', json.response[0].newClientDclID);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0,\n  \"continuousLeaseService\": true,\n  \"fromAgreedPeriodDate\": \"2026-03-01\",\n  \"toAgreedPeriodDate\": \"2026-08-31\",\n  \"periodicity\": 1,\n  \"customerVatNumber\": \"123456789\",\n  \"customerCountry\": \"GR\",\n  \"rental\": {\n    \"vehicleRegistrationNumber\": \"ΑΒΓ5678\",\n    \"vehicleMovementPurpose\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"]
+            },
+            "description": "Create a continuous lease client entry with agreed period and periodicity."
+          }
+        },
+        {
+          "name": "Get Clients",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?dclId={{dclId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"],
+              "query": [
+                { "key": "dclId", "value": "{{dclId}}", "description": "Starting DCL ID (required)" },
+                { "key": "maxDclId", "value": "", "description": "Max DCL ID filter", "disabled": true },
+                { "key": "entityVatNumber", "value": "", "description": "Entity VAT number", "disabled": true },
+                { "key": "continuationToken", "value": "", "description": "Pagination token", "disabled": true }
+              ]
+            },
+            "description": "Fetch client entries from AADE DCL.\n\ndclId is required. Optional filters: maxDclId, entityVatNumber, continuationToken."
+          }
+        },
+        {
+          "name": "Update Client — Complete Entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"amount\": 150.00,\n  \"invoiceKind\": 1,\n  \"comments\": \"Rental completed — 3 days\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients", "{{dclId}}"]
+            },
+            "description": "Mark a rental entry as complete.\n\n- entryCompletion: true\n- amount: agreed total\n- invoiceKind: 1 (ΑΛΠ/ΑΠΥ), 2 (Invoice), 3 (ΑΛΠ/ΑΠΥ-ΦΗΜ)"
+          }
+        },
+        {
+          "name": "Update Client — Non-Issue Invoice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryCompletion\": true,\n  \"nonIssueInvoice\": true,\n  \"reasonNonIssueType\": 1,\n  \"comments\": \"Free service — no invoice issued\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients", "{{dclId}}"]
+            },
+            "description": "Complete a rental without issuing an invoice.\n\n- reasonNonIssueType: 1 (FreeService), 2 (OwnUse)"
+          }
+        },
+        {
+          "name": "Cancel Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{dclId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients", "{{dclId}}"],
+              "query": [
+                { "key": "entityVatNumber", "value": "", "description": "Entity VAT (for third-party calls)", "disabled": true }
+              ]
+            },
+            "description": "Cancel a client entry in AADE DCL."
+          }
+        },
+        {
+          "name": "Correlate Client — with MARK",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mark\": 400001234567890,\n  \"correlatedDCLIds\": [{{dclId}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/correlations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients", "correlations"]
+            },
+            "description": "Correlate DCL entries with a myDATA MARK.\n\nUse either `mark` OR `fim`, not both."
+          }
+        },
+        {
+          "name": "Correlate Client — with FIM",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fim\": {\n    \"FIMNumber\": \"ABC123456\",\n    \"FIMAA\": 1,\n    \"FIMIssueDate\": \"2026-02-28\",\n    \"FIMIssueTime\": \"14:30\"\n  },\n  \"correlatedDCLIds\": [{{dclId}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/correlations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients", "correlations"]
+            },
+            "description": "Correlate DCL entries with a fiscal receipt (FIM).\n\nUse either `mark` OR `fim`, not both."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wrapp — Billing Books",
+      "description": "Retrieve billing book series from Wrapp. Run \"Get All Billing Books\" first to auto-populate the `billingBookId` variable.",
+      "item": [
+        {
+          "name": "Get All Billing Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "",
+                  "// Auto-save the first 11.2 billing book, or fallback to first",
+                  "const books = pm.response.json();",
+                  "if (books && books.length > 0) {",
+                  "  const apyBook = books.find(b => b.invoice_type_code === '11.2');",
+                  "  const id = apyBook ? apyBook.id : books[0].id;",
+                  "  pm.collectionVariables.set('billingBookId', id);",
+                  "  console.log('Saved billingBookId:', id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing-books",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing-books"]
+            },
+            "description": "Retrieves all billing books for the tenant.\n\nResponse fields per book:\n- id (UUID)\n- name\n- series\n- invoice_type_code\n- number (next sequential number)\n\nAuto-saves the first 11.2 book ID as `billingBookId`."
+          }
+        },
+        {
+          "name": "Create Billing Book (e.g. 11.2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('billingBookId', json.id);",
+                  "  console.log('Saved billingBookId:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Απ Παροχης Υπηρεσιών\",\n  \"series\": \"ΕΑΠΑΡ\",\n  \"number\": 1,\n  \"invoice_type_code\": \"11.2\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/billing-books",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing-books"]
+            },
+            "description": "Create a new billing book.\n\nRequired fields:\n- name: human-readable name\n- series: serial identifier (e.g. ΕΑΠΑΡ)\n- number: starting invoice number\n- invoice_type_code: myDATA type (e.g. 11.2)\n\nNote: Billing books with code 1.1 cover all 1.x types, 2.1 covers 2.x, etc.\n\nAuto-saves the new billing book ID as `billingBookId`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wrapp — ΑΠΥ Service Receipts (11.2)",
+      "description": "B2C service receipt scenarios for car rental. All requests use `billingBookId` — run \"Get All Billing Books\" first.",
+      "item": [
+        {
+          "name": "Basic — Cash Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);",
+                  "if (json.my_data_mark) pm.collectionVariables.set('myDataMark', json.my_data_mark);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 0,\n  \"net_total_amount\": 40.32,\n  \"vat_total_amount\": 9.68,\n  \"total_amount\": 50.00,\n  \"payable_total_amount\": 50.00,\n  \"counterpart\": {\n    \"name\": \"Ιωάννης Παπαδόπουλος\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Ημερήσια ενοικίαση οχήματος\",\n      \"quantity\": 1,\n      \"quantity_type\": 1,\n      \"unit_price\": 40.32,\n      \"net_total_price\": 40.32,\n      \"vat_rate\": 24,\n      \"vat_total\": 9.68,\n      \"subtotal\": 50.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Single-day car rental receipt, cash payment.\n\n- payment_method_type: 0 (Cash)\n- B2C: only counterpart name required"
+          }
+        },
+        {
+          "name": "Card Payment — Weekend Rental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);",
+                  "if (json.my_data_mark) pm.collectionVariables.set('myDataMark', json.my_data_mark);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 3,\n  \"net_total_amount\": 80.65,\n  \"vat_total_amount\": 19.35,\n  \"total_amount\": 100.00,\n  \"payable_total_amount\": 100.00,\n  \"counterpart\": {\n    \"name\": \"Μαρία Κωνσταντίνου\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Ενοικίαση οχήματος — Σαββατοκύριακο\",\n      \"description\": \"Weekend car rental (Fri-Sun)\",\n      \"quantity\": 3,\n      \"quantity_type\": 1,\n      \"unit_price\": 26.88,\n      \"net_total_price\": 80.65,\n      \"vat_rate\": 24,\n      \"vat_total\": 19.35,\n      \"subtotal\": 100.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Weekend 3-day rental, card payment.\n\n- payment_method_type: 3 (Card)"
+          }
+        },
+        {
+          "name": "Multiple Lines — Rental + Insurance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);",
+                  "if (json.my_data_mark) pm.collectionVariables.set('myDataMark', json.my_data_mark);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 3,\n  \"net_total_amount\": 185.48,\n  \"vat_total_amount\": 44.52,\n  \"total_amount\": 230.00,\n  \"payable_total_amount\": 230.00,\n  \"counterpart\": {\n    \"name\": \"Δημήτρης Αλεξίου\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Ενοικίαση οχήματος — 5 ημέρες\",\n      \"quantity\": 5,\n      \"quantity_type\": 1,\n      \"unit_price\": 32.26,\n      \"net_total_price\": 161.29,\n      \"vat_rate\": 24,\n      \"vat_total\": 38.71,\n      \"subtotal\": 200.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    },\n    {\n      \"line_number\": 2,\n      \"name\": \"Πλήρης ασφάλεια (CDW + TP)\",\n      \"quantity\": 5,\n      \"quantity_type\": 1,\n      \"unit_price\": 4.84,\n      \"net_total_price\": 24.19,\n      \"vat_rate\": 24,\n      \"vat_total\": 5.81,\n      \"subtotal\": 30.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "5-day rental with full insurance — two line items."
+          }
+        },
+        {
+          "name": "With Email Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);",
+                  "if (json.my_data_mark) pm.collectionVariables.set('myDataMark', json.my_data_mark);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 3,\n  \"net_total_amount\": 80.65,\n  \"vat_total_amount\": 19.35,\n  \"total_amount\": 100.00,\n  \"payable_total_amount\": 100.00,\n  \"customer_emails\": [\"customer@example.com\"],\n  \"email_locale\": \"el\",\n  \"counterpart\": {\n    \"name\": \"Ελένη Βασιλείου\",\n    \"email\": \"customer@example.com\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Ενοικίαση οχήματος — 2 ημέρες\",\n      \"quantity\": 2,\n      \"quantity_type\": 1,\n      \"unit_price\": 40.32,\n      \"net_total_price\": 80.65,\n      \"vat_rate\": 24,\n      \"vat_total\": 19.35,\n      \"subtotal\": 100.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Service receipt with email notification.\n\n- customer_emails: sends receipt by email\n- email_locale: \"el\" (Greek) or \"en\" (English)"
+          }
+        },
+        {
+          "name": "PDF — English (Tourist)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);",
+                  "if (json.my_data_mark) pm.collectionVariables.set('myDataMark', json.my_data_mark);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 3,\n  \"net_total_amount\": 120.97,\n  \"vat_total_amount\": 29.03,\n  \"total_amount\": 150.00,\n  \"payable_total_amount\": 150.00,\n  \"generate_pdf\": true,\n  \"email_locale\": \"en\",\n  \"customer_emails\": [\"tourist@example.com\"],\n  \"counterpart\": {\n    \"name\": \"John Smith\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Car rental — 3 days\",\n      \"description\": \"Compact car, full insurance\",\n      \"quantity\": 3,\n      \"quantity_type\": 1,\n      \"unit_price\": 40.32,\n      \"net_total_price\": 120.97,\n      \"vat_rate\": 24,\n      \"vat_total\": 29.03,\n      \"subtotal\": 150.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Service receipt with PDF generation for a tourist.\n\n- generate_pdf: true — PDF link via webhook\n- email_locale: \"en\" for English"
+          }
+        },
+        {
+          "name": "Bank Transfer — Monthly Rental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);",
+                  "if (json.my_data_mark) pm.collectionVariables.set('myDataMark', json.my_data_mark);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 6,\n  \"payment_details\": \"Eurobank IBAN: GR12 0123 0456 0789 0123 4567 890\",\n  \"net_total_amount\": 403.23,\n  \"vat_total_amount\": 96.77,\n  \"total_amount\": 500.00,\n  \"payable_total_amount\": 500.00,\n  \"notes\": \"Monthly rental — March 2026\",\n  \"counterpart\": {\n    \"name\": \"Κώστας Αντωνίου\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Μηνιαία ενοικίαση οχήματος\",\n      \"description\": \"March 2026\",\n      \"quantity\": 1,\n      \"quantity_type\": 1,\n      \"unit_price\": 403.23,\n      \"net_total_price\": 403.23,\n      \"vat_rate\": 24,\n      \"vat_total\": 96.77,\n      \"subtotal\": 500.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Monthly rental paid via web banking.\n\n- payment_method_type: 6 (Web banking)\n- payment_details: IBAN info\n- notes: free text on invoice"
+          }
+        },
+        {
+          "name": "Draft — Not Submitted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('invoiceId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 0,\n  \"net_total_amount\": 40.32,\n  \"vat_total_amount\": 9.68,\n  \"total_amount\": 50.00,\n  \"payable_total_amount\": 50.00,\n  \"draft\": true,\n  \"counterpart\": {\n    \"name\": \"Draft Customer\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Ενοικίαση οχήματος (draft)\",\n      \"quantity\": 1,\n      \"quantity_type\": 1,\n      \"unit_price\": 40.32,\n      \"net_total_price\": 40.32,\n      \"vat_rate\": 24,\n      \"vat_total\": 9.68,\n      \"subtotal\": 50.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Save as draft without submitting to myDATA.\n\n- draft: true\n- Can be issued later via Wrapp dashboard or API"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wrapp — Credit Notes (11.4)",
+      "description": "Retail credit notes correlated to a previously issued ΑΠΥ.",
+      "item": [
+        {
+          "name": "Full Refund",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.4\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 0,\n  \"net_total_amount\": 40.32,\n  \"vat_total_amount\": 9.68,\n  \"total_amount\": 50.00,\n  \"payable_total_amount\": 50.00,\n  \"correlated_invoices\": [\"{{myDataMark}}\"],\n  \"counterpart\": {\n    \"name\": \"Ιωάννης Παπαδόπουλος\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Ακύρωση ενοικίασης — πλήρης επιστροφή\",\n      \"quantity\": 1,\n      \"quantity_type\": 1,\n      \"unit_price\": 40.32,\n      \"net_total_price\": 40.32,\n      \"vat_rate\": 24,\n      \"vat_total\": 9.68,\n      \"subtotal\": 50.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Full refund credit note correlated to a prior ΑΠΥ.\n\n- invoice_type_code: 11.4\n- Uses `myDataMark` auto-saved from a previous receipt"
+          }
+        },
+        {
+          "name": "Partial Refund — Early Return",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 or 202', () => pm.expect(pm.response.code).to.be.oneOf([201, 202]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.4\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 3,\n  \"net_total_amount\": 16.13,\n  \"vat_total_amount\": 3.87,\n  \"total_amount\": 20.00,\n  \"payable_total_amount\": 20.00,\n  \"correlated_invoices\": [\"{{myDataMark}}\"],\n  \"counterpart\": {\n    \"name\": \"Δημήτρης Αλεξίου\"\n  },\n  \"invoice_lines\": [\n    {\n      \"line_number\": 1,\n      \"name\": \"Πρόωρη επιστροφή — πίστωση 1 ημέρας\",\n      \"quantity\": 1,\n      \"quantity_type\": 1,\n      \"unit_price\": 16.13,\n      \"net_total_price\": 16.13,\n      \"vat_rate\": 24,\n      \"vat_total\": 3.87,\n      \"subtotal\": 20.00,\n      \"classification_category\": \"category1_3\",\n      \"classification_type\": \"E3_561_003\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Partial refund for early vehicle return.\n\n- Correlated to original ΑΠΥ via myDataMark"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "description": "Negative test cases — all should return 400 or 422.",
+      "item": [
+        {
+          "name": "❌ Missing billing_book_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 422', () => pm.expect(pm.response.code).to.be.oneOf([400, 422]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"payment_method_type\": 0,\n  \"net_total_amount\": 10,\n  \"vat_total_amount\": 2.4,\n  \"total_amount\": 12.4,\n  \"payable_total_amount\": 12.4,\n  \"counterpart\": { \"name\": \"Test\" },\n  \"invoice_lines\": [{\n    \"line_number\": 1,\n    \"name\": \"Item\",\n    \"quantity\": 1,\n    \"unit_price\": 10,\n    \"net_total_price\": 10,\n    \"vat_rate\": 24,\n    \"vat_total\": 2.4,\n    \"subtotal\": 12.4,\n    \"classification_category\": \"category1_3\",\n    \"classification_type\": \"E3_561_003\"\n  }]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Should return 400 — billing_book_id is required."
+          }
+        },
+        {
+          "name": "❌ Missing counterpart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 422', () => pm.expect(pm.response.code).to.be.oneOf([400, 422]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 0,\n  \"net_total_amount\": 10,\n  \"vat_total_amount\": 2.4,\n  \"total_amount\": 12.4,\n  \"payable_total_amount\": 12.4,\n  \"invoice_lines\": [{\n    \"line_number\": 1,\n    \"name\": \"Item\",\n    \"quantity\": 1,\n    \"unit_price\": 10,\n    \"net_total_price\": 10,\n    \"vat_rate\": 24,\n    \"vat_total\": 2.4,\n    \"subtotal\": 12.4,\n    \"classification_category\": \"category1_3\",\n    \"classification_type\": \"E3_561_003\"\n  }]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Should return 400 — counterpart object is required."
+          }
+        },
+        {
+          "name": "❌ Empty invoice_lines",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 422', () => pm.expect(pm.response.code).to.be.oneOf([400, 422]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_type_code\": \"11.2\",\n  \"billing_book_id\": \"{{billingBookId}}\",\n  \"payment_method_type\": 0,\n  \"net_total_amount\": 10,\n  \"vat_total_amount\": 2.4,\n  \"total_amount\": 12.4,\n  \"payable_total_amount\": 12.4,\n  \"counterpart\": { \"name\": \"Test\" },\n  \"invoice_lines\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Should return 400 — invoice_lines must be non-empty."
+          }
+        },
+        {
+          "name": "❌ Missing rental data (Client)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"]
+            },
+            "description": "Should return 400 — rental object is required."
+          }
+        }
+      ]
+    }
+  ]
+}

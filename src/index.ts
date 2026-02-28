@@ -3,6 +3,8 @@ import cors from 'cors';
 import { config } from './config';
 import healthRouter from './routes/health';
 import clientsRouter from './routes/clients';
+import invoicesRouter from './routes/invoices';
+import billingBooksRouter from './routes/billingBooks';
 import { errorHandler } from './middleware/errorHandler';
 
 const app: Application = express();
@@ -15,6 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/health', healthRouter);
 app.use('/api/clients', clientsRouter);
+app.use('/api/invoices', invoicesRouter);
+app.use('/api/billing-books', billingBooksRouter);
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({
@@ -27,6 +31,8 @@ app.get('/', (_req: Request, res: Response) => {
       updateClient: 'PUT /api/clients/:dclId',
       cancelClient: 'DELETE /api/clients/:dclId',
       correlateClient: 'POST /api/clients/correlations',
+      createInvoice: 'POST /api/invoices',
+      billingBooks: 'GET /api/billing-books',
     },
   });
 });
