@@ -52,4 +52,20 @@ router.post('/', validateCreateInvoice, async (req: Request, res: Response, next
   }
 });
 
+/**
+ * POST /invoices/:id/cancel
+ * Cancel an existing invoice via Wrapp.
+ *
+ * Returns: Wrapp response with cancellation details.
+ */
+router.post('/:id/cancel', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const result = await wrappClient.cancelInvoice(id);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

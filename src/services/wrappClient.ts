@@ -4,6 +4,7 @@ import {
   CreateInvoiceRequest,
   WrappLoginResponse,
   WrappInvoiceResponse,
+  WrappInvoiceSuccessResponse,
   WrappBranch,
 } from '../types/invoice';
 import { BillingBook, CreateBillingBookRequest, UpdateBillingBookRequest } from '../types/billingBook';
@@ -110,6 +111,24 @@ export class WrappClient {
     }
   }
 
+  /**
+   * POST /invoices/:id/cancel — Cancel an existing invoice.
+   */
+  async cancelInvoice(id: string): Promise<WrappInvoiceSuccessResponse> {
+    const headers = await this.getAuthHeaders();
+
+    try {
+      const response = await this.http.post<WrappInvoiceSuccessResponse>(
+        `/invoices/${encodeURIComponent(id)}/cancel`,
+        {},
+        { headers },
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Invoice cancellation failed');
+    }
+  }
+
   // ─── Branches ───────────────────────────────────────────────────────────────
 
   /**
@@ -138,7 +157,7 @@ export class WrappClient {
     const normalised = branchCode.replace(/^0+/, '') || '0';
 
     const match = branches.find(
-      b => (b.code.replace(/^0+/, '') || '0') === normalised,
+      b => (String(b.code ?? '').replace(/^0+/, '') || '0') === normalised,
     );
 
     if (!match) {
