@@ -22,6 +22,12 @@ router.post('/', validateCreateInvoice, async (req: Request, res: Response, next
   try {
     const data: CreateInvoiceRequest = req.body;
 
+    // Resolve branch_code → branch id when using billing_book_id directly
+    if (data.branch_code && !data.branch) {
+      data.branch = await wrappClient.resolveBranchId(data.branch_code);
+    }
+    delete data.branch_code;
+
     // If billing_book_id is not provided, resolve it from invoice_type_code
     const result = data.billing_book_id
       ? await wrappClient.createInvoice(data)

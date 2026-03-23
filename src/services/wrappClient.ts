@@ -4,8 +4,9 @@ import {
   CreateInvoiceRequest,
   WrappLoginResponse,
   WrappInvoiceResponse,
+  WrappBranch,
 } from '../types/invoice';
-import { BillingBook, CreateBillingBookRequest } from '../types/billingBook';
+import { BillingBook, CreateBillingBookRequest, UpdateBillingBookRequest } from '../types/billingBook';
 
 export class WrappApiError extends Error {
   public statusCode: number;
@@ -109,6 +110,47 @@ export class WrappClient {
     }
   }
 
+  // ─── Branches ───────────────────────────────────────────────────────────────
+
+  /**
+   * GET /branches — Retrieve all branches for the tenant.
+   */
+  async getBranches(): Promise<WrappBranch[]> {
+    const headers = await this.getAuthHeaders();
+
+    try {
+      const response = await this.http.get<WrappBranch[]>(
+        '/branches',
+        { headers },
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to retrieve branches');
+    }
+  }
+
+  /**
+   * Resolve a branch UUID from a user-provided code.
+   * Accepts codes like "001", "01", or "1" — normalises by stripping leading zeros.
+   */
+  async resolveBranchId(branchCode: string): Promise<string> {
+    const branches = await this.getBranches();
+    const normalised = branchCode.replace(/^0+/, '') || '0';
+
+    const match = branches.find(
+      b => (b.code.replace(/^0+/, '') || '0') === normalised,
+    );
+
+    if (!match) {
+      throw new WrappApiError(
+        `No branch found for code "${branchCode}"`,
+        404,
+      );
+    }
+
+    return match.id;
+  }
+
   // ─── Billing Books ──────────────────────────────────────────────────────────
 
   /**
@@ -138,6 +180,7 @@ export class WrappClient {
    * Create an invoice by invoice_type_code.
    * Automatically resolves the billing_book_id from the tenant's billing books.
    * If billing_book_id is already provided, it is used as-is.
+   * Also resolves branch_code → branch id when branch_code is provided.
    */
   async createInvoiceByTypeCode(
     data: Omit<CreateInvoiceRequest, 'billing_book_id'> & { billing_book_id?: string },
@@ -145,9 +188,18 @@ export class WrappClient {
     const billingBookId = data.billing_book_id
       ?? await this.resolveBillingBookId(data.invoice_type_code);
 
+    // Resolve branch_code to branch id if provided
+    let branchId = data.branch;
+    if (data.branch_code && !data.branch) {
+      branchId = await this.resolveBranchId(data.branch_code);
+    }
+
+    const { branch_code, ...rest } = data;
+
     return this.createInvoice({
-      ...data,
+      ...rest,
       billing_book_id: billingBookId,
+      branch: branchId,
     } as CreateInvoiceRequest);
   }
 
@@ -183,6 +235,24 @@ export class WrappClient {
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to create billing book');
+    }
+  }
+
+  /**
+   * PUT /billing_books/:id — Update an existing billing book.
+   */
+  async updateBillingBook(id: string, data: UpdateBillingBookRequest): Promise<BillingBook> {
+    const headers = await this.getAuthHeaders();
+
+    try {
+      const response = await this.http.put<BillingBook>(
+        `/billing_books/${encodeURIComponent(id)}`,
+        data,
+        { headers },
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to update billing book');
     }
   }
 

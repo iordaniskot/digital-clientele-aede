@@ -2,6 +2,14 @@
 // Based on Wrapp API v1.10 documentation
 // Supports B2B and B2C invoice creation via Wrapp third-party provider
 
+// ─── Branch ─────────────────────────────────────────────────────────────────
+
+export interface WrappBranch {
+  id: string;
+  name: string;
+  code: string;
+}
+
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
 /** Payment method type codes as defined by Wrapp / myDATA */
@@ -180,8 +188,10 @@ export interface TaxesTotal {
 // ─── Create Invoice Request ─────────────────────────────────────────────────
 
 export interface CreateInvoiceRequest {
-  /** Branch id */
+  /** Branch id (UUID) — resolved automatically if branch_code is provided */
   branch?: string;
+  /** Branch code as shown in Wrapp (e.g. "001", "01", "1") — resolved to branch id */
+  branch_code?: string;
   /** Customer information (required) */
   counterpart: InvoiceCounterpart;
   /** Billing book ID (required) */

@@ -28,3 +28,11 @@ export interface CreateBillingBookRequest {
   /** Invoice type code e.g. "11.2", "1.1", "2.1" (required) */
   invoice_type_code: string;
 }
+
+/** Request body for updating an existing billing book (all fields optional) */
+export interface UpdateBillingBookRequest {
+  name?: string;
+  series?: string;
+  number?: number;
+  invoice_type_code?: string;
+}

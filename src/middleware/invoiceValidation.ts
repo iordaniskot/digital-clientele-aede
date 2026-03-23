@@ -34,6 +34,15 @@ export function validateCreateInvoice(req: Request, _res: Response, next: NextFu
   const body = req.body as Partial<CreateInvoiceRequest>;
   const errors: string[] = [];
 
+  // ─── Branch validation ───────────────────────────────────────────────────
+  if (body.branch && body.branch_code) {
+    errors.push('Provide either branch (UUID) or branch_code, not both');
+  }
+
+  if (body.branch_code !== undefined && (typeof body.branch_code !== 'string' || !body.branch_code.trim())) {
+    errors.push('branch_code must be a non-empty string (e.g. "001", "01", "1")');
+  }
+
   // ─── Top-level required fields ──────────────────────────────────────────────
   // billing_book_id is optional — if omitted, it will be resolved from invoice_type_code
   if (!body.billing_book_id && !body.invoice_type_code) {
@@ -154,6 +163,7 @@ export function validateCreateInvoice(req: Request, _res: Response, next: NextFu
   }
 
   if (errors.length > 0) {
+    console.error('Invoice validation errors:', errors);
     return next(new ValidationError(errors));
   }
 

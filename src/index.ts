@@ -5,6 +5,7 @@ import healthRouter from './routes/health';
 import clientsRouter from './routes/clients';
 import invoicesRouter from './routes/invoices';
 import billingBooksRouter from './routes/billingBooks';
+import branchesRouter from './routes/branches';
 import { errorHandler } from './middleware/errorHandler';
 
 const app: Application = express();
@@ -19,6 +20,7 @@ app.use('/health', healthRouter);
 app.use('/api/clients', clientsRouter);
 app.use('/api/invoices', invoicesRouter);
 app.use('/api/billing-books', billingBooksRouter);
+app.use('/api/branches', branchesRouter);
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({
@@ -33,6 +35,7 @@ app.get('/', (_req: Request, res: Response) => {
       correlateClient: 'POST /api/clients/correlations',
       createInvoice: 'POST /api/invoices',
       billingBooks: 'GET /api/billing-books',
+      branches: 'GET /api/branches',
     },
   });
 });

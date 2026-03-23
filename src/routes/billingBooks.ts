@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { wrappClient } from '../services/wrappClient';
-import { CreateBillingBookRequest } from '../types/billingBook';
+import { CreateBillingBookRequest, UpdateBillingBookRequest } from '../types/billingBook';
 
 const router = Router();
 
@@ -41,6 +41,30 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     const data: CreateBillingBookRequest = { name, series, number, invoice_type_code };
     const result = await wrappClient.createBillingBook(data);
     res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/billing-books/:id
+ * Update an existing billing book in Wrapp.
+ *
+ * Body: { name?, series?, number?, invoice_type_code? }
+ */
+router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { name, series, number, invoice_type_code } = req.body;
+
+    const data: UpdateBillingBookRequest = {};
+    if (name !== undefined) data.name = name;
+    if (series !== undefined) data.series = series;
+    if (number !== undefined) data.number = number;
+    if (invoice_type_code !== undefined) data.invoice_type_code = invoice_type_code;
+
+    const result = await wrappClient.updateBillingBook(id, data);
+    res.json(result);
   } catch (error) {
     next(error);
   }
