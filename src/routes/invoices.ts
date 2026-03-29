@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { wrappClient } from '../services/wrappClient';
 import { CreateInvoiceRequest } from '../types/invoice';
 import { validateCreateInvoice } from '../middleware/invoiceValidation';
 
@@ -24,14 +23,14 @@ router.post('/', validateCreateInvoice, async (req: Request, res: Response, next
 
     // Resolve branch_code → branch id when using billing_book_id directly
     if (data.branch_code && !data.branch) {
-      data.branch = await wrappClient.resolveBranchId(data.branch_code);
+      data.branch = await req.wrappClient!.resolveBranchId(data.branch_code);
     }
     delete data.branch_code;
 
     // If billing_book_id is not provided, resolve it from invoice_type_code
     const result = data.billing_book_id
-      ? await wrappClient.createInvoice(data)
-      : await wrappClient.createInvoiceByTypeCode(data);
+      ? await req.wrappClient!.createInvoice(data)
+      : await req.wrappClient!.createInvoiceByTypeCode(data);
 
     // Check if the result is a pending response
     if ('status' in result && result.status === 'pending') {
@@ -61,7 +60,7 @@ router.post('/', validateCreateInvoice, async (req: Request, res: Response, next
 router.post('/:id/cancel', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const result = await wrappClient.cancelInvoice(id);
+    const result = await req.wrappClient!.cancelInvoice(id);
     res.json(result);
   } catch (error) {
     next(error);

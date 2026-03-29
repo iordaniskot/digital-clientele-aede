@@ -1,12 +1,17 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { config } from './config';
+import { loadMerchantConfigs, getAllMerchants, validateMerchantConfigs } from './config/merchant.config';
+import { authMiddleware } from './middleware/auth';
 import healthRouter from './routes/health';
 import clientsRouter from './routes/clients';
 import invoicesRouter from './routes/invoices';
 import billingBooksRouter from './routes/billingBooks';
 import branchesRouter from './routes/branches';
 import { errorHandler } from './middleware/errorHandler';
+
+// Load merchant configurations from environment
+loadMerchantConfigs();
 
 const app: Application = express();
 
@@ -17,10 +22,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/health', healthRouter);
-app.use('/api/clients', clientsRouter);
-app.use('/api/invoices', invoicesRouter);
-app.use('/api/billing-books', billingBooksRouter);
-app.use('/api/branches', branchesRouter);
+app.use('/api/clients', authMiddleware, clientsRouter);
+app.use('/api/invoices', authMiddleware, invoicesRouter);
+app.use('/api/billing-books', authMiddleware, billingBooksRouter);
+app.use('/api/branches', authMiddleware, branchesRouter);
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({
@@ -45,6 +50,13 @@ app.use(errorHandler);
 
 // Start server
 app.listen(config.port, () => {
+  if (!validateMerchantConfigs()) {
+    console.warn('⚠️  No merchant configurations found. Check your .env file.');
+    console.warn('   Expected pattern: MERCHANT_{key}_API_KEY, MERCHANT_{key}_AADE_USER_ID, etc.');
+  } else {
+    const merchants = getAllMerchants();
+    console.log(`✅ Loaded ${merchants.length} merchant(s): ${merchants.map(m => m.merchantKey).join(', ')}`);
+  }
   console.log(`Server running on http://localhost:${config.port}`);
 });
 

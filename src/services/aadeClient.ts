@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { config } from '../config';
+import type { AadeConfig } from '../config/merchant.config';
 import {
   SendClientRequest,
   UpdateClientRequest,
@@ -36,13 +37,14 @@ export class AadeApiError extends Error {
 export class AadeClient {
   private http: AxiosInstance;
 
-  constructor() {
+  constructor(aadeConfig?: AadeConfig) {
+    const cfg = aadeConfig ?? config.aade;
     this.http = axios.create({
-      baseURL: config.aade.baseUrl,
+      baseURL: cfg.baseUrl,
       headers: {
         'Content-Type': 'application/xml',
-        'aade-user-id': config.aade.userId,
-        'ocp-apim-subscription-key': config.aade.subscriptionKey,
+        'aade-user-id': cfg.userId,
+        'ocp-apim-subscription-key': cfg.subscriptionKey,
       },
       timeout: 30000,
     });

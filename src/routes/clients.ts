@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { aadeClient } from '../services/aadeClient';
 import {
   SendClientRequest,
   UpdateClientRequest,
@@ -25,7 +24,7 @@ const router = Router();
 router.post('/', validateSendClient, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: SendClientRequest = req.body;
-    const result = await aadeClient.sendClient(data);
+    const result = await req.aadeClient!.sendClient(data);
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -46,7 +45,7 @@ router.put('/:dclId', validateUpdateClient, async (req: Request, res: Response, 
       ...req.body,
       initialDclId: parseInt(req.params.dclId, 10) || req.body.initialDclId,
     };
-    const result = await aadeClient.updateClient(data);
+    const result = await req.aadeClient!.updateClient(data);
     res.json(result);
   } catch (error) {
     next(error);
@@ -63,7 +62,7 @@ router.put('/:dclId', validateUpdateClient, async (req: Request, res: Response, 
  */
 router.delete('/:dclId', validateCancelClient, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await aadeClient.cancelClient({
+    const result = await req.aadeClient!.cancelClient({
       dclId: parseInt(req.params.dclId, 10),
       entityVatNumber: req.query.entityVatNumber as string | undefined,
     });
@@ -86,7 +85,7 @@ router.delete('/:dclId', validateCancelClient, async (req: Request, res: Respons
  */
 router.get('/', validateRequestClients, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await aadeClient.requestClients({
+    const result = await req.aadeClient!.requestClients({
       dclId: parseInt(req.query.dclId as string, 10),
       maxDclId: req.query.maxDclId ? parseInt(req.query.maxDclId as string, 10) : undefined,
       entityVatNumber: req.query.entityVatNumber as string | undefined,
@@ -108,7 +107,7 @@ router.get('/', validateRequestClients, async (req: Request, res: Response, next
 router.post('/correlations', validateClientCorrelations, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: ClientCorrelationsRequest = req.body;
-    const result = await aadeClient.clientCorrelations(data);
+    const result = await req.aadeClient!.clientCorrelations(data);
     res.status(201).json(result);
   } catch (error) {
     next(error);

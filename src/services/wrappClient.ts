@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { config } from '../config';
+import type { WrappConfig } from '../config/merchant.config';
 import {
   CreateInvoiceRequest,
   WrappLoginResponse,
@@ -29,10 +30,12 @@ export class WrappClient {
   private http: AxiosInstance;
   private jwt: string | null = null;
   private jwtExpiresAt: number = 0;
+  private wrappConfig: WrappConfig;
 
-  constructor() {
+  constructor(wrappConfig?: WrappConfig) {
+    this.wrappConfig = wrappConfig ?? config.wrapp;
     this.http = axios.create({
-      baseURL: config.wrapp.baseUrl,
+      baseURL: this.wrappConfig.baseUrl,
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -54,14 +57,14 @@ export class WrappClient {
     }
 
     const payload: Record<string, string> = {
-      api_key: config.wrapp.apiKey,
+      api_key: this.wrappConfig.apiKey,
     };
 
     // Use email or wrapp_user_id for authentication
-    if (config.wrapp.email) {
-      payload.email = config.wrapp.email;
-    } else if (config.wrapp.wrappUserId) {
-      payload.wrapp_user_id = config.wrapp.wrappUserId;
+    if (this.wrappConfig.email) {
+      payload.email = this.wrappConfig.email;
+    } else if (this.wrappConfig.wrappUserId) {
+      payload.wrapp_user_id = this.wrappConfig.wrappUserId;
     } else {
       throw new WrappApiError(
         'Wrapp authentication requires either WRAPP_EMAIL or WRAPP_USER_ID',
