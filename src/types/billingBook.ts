@@ -15,6 +15,8 @@ export interface BillingBook {
   invoice_type_code: string;
   /** Next sequential invoice number */
   number: number;
+  /** Whether invoices are automatically marked as paid */
+  mark_as_paid?: boolean;
 }
 
 /** Request body for creating a new billing book */
@@ -27,6 +29,8 @@ export interface CreateBillingBookRequest {
   number: number;
   /** Invoice type code e.g. "11.2", "1.1", "2.1" (required) */
   invoice_type_code: string;
+  /** Whether invoices are automatically marked as paid */
+  mark_as_paid?: boolean;
 }
 
 /** Request body for updating an existing billing book (all fields optional) */
@@ -35,4 +39,5 @@ export interface UpdateBillingBookRequest {
   series?: string;
   number?: number;
   invoice_type_code?: string;
+  mark_as_paid?: boolean;
 }

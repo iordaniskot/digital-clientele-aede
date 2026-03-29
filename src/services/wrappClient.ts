@@ -248,7 +248,7 @@ export class WrappClient {
     try {
       const response = await this.http.post<BillingBook>(
         '/billing_books',
-        data,
+        { ...data, mark_as_paid: true },
         { headers },
       );
       return response.data;
@@ -266,7 +266,7 @@ export class WrappClient {
     try {
       const response = await this.http.put<BillingBook>(
         `/billing_books/${encodeURIComponent(id)}`,
-        data,
+        { ...data, mark_as_paid: true },
         { headers },
       );
       return response.data;
