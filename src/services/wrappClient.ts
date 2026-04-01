@@ -108,6 +108,7 @@ export class WrappClient {
         data,
         { headers },
       );
+console.log('Invoice json:', data);
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Invoice creation failed');
